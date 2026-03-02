@@ -670,7 +670,8 @@ def retrive_relation_pairs_dict(in_pubtator_file,
     
     return pmid_2_rel_pairs_dict, pmid_2_id2ne_type_dict
      
-def eval(in_gold_pubtator_file,
+def eval(in_pred_tsv_file,
+         in_gold_pubtator_file,
          in_pred_pubtator_file,
          out_error_cases_file,
          in_pmid_file='',
@@ -798,6 +799,7 @@ def eval(in_gold_pubtator_file,
                         rel_typed_fn_count[ne2_type + '|' + ne1_type + '|' + rel_type] += 1.
                         typed_fn_count[(ne2_type, ne1_type)] += 1.
                         outputs.append(ne2_type + '|' + ne1_type + 'FN:\t' + pmid + '\t' + gold_pair[0] + '\t' + gold_pair[1] + '\t' + gold_pair[2])
+                        
             for pred_pair in pred_relation_pairs:
                 if pred_pair not in gold_relation_pairs:
                     fp_count += 1.                    
@@ -813,6 +815,7 @@ def eval(in_gold_pubtator_file,
                         rel_typed_fp_count[ne2_type + '|' + ne1_type + '|' + rel_type] += 1.
                         typed_fp_count[(ne2_type, ne1_type)] += 1.
                         outputs.append(ne2_type + '|' + ne1_type + 'FP:\t' + pmid + '\t' + pred_pair[0] + '\t' + pred_pair[1] + '\t' + pred_pair[2])
+                        
     for pmid in pred_relation_pairs_dict.keys():
         if has_eval_set and pmid not in eval_pmids:
             continue
@@ -845,52 +848,79 @@ def eval(in_gold_pubtator_file,
     all_rel_types = list(all_rel_types)
     all_rel_types.sort()
     
+    total_data_points_number = len(pd.read_csv(in_pred_tsv_file, sep="\t", index_col=0))
+    tn_count = total_data_points_number - tp_count - fp_count - fn_count
+    
     prec = tp_count / (tp_count + fp_count) if (tp_count + fp_count) != 0 else 0.
     reca = tp_count / (tp_count + fn_count) if (tp_count + fn_count) != 0 else 0.
     fsco = (2*prec*reca) / (prec + reca) if (prec + reca) != 0 else 0.
+    acc  = (tp_count + tn_count) / (tp_count + fp_count + tn_count + fn_count)
     
-    with open(out_error_cases_file, 'w', encoding='utf8') as score_writer:
-        score_writer.write('Overall')
-        score_writer.write('\t' + str(int(tp_count + fn_count)))
-        score_writer.write('\t' + str(int(tp_count)))
-        score_writer.write('\t' + str(int(fp_count)))
-        score_writer.write('\t' + str(int(fn_count)))
-        score_writer.write('\t' + str(prec))
-        score_writer.write('\t' + str(reca))
-        score_writer.write('\t' + str(fsco) + '\n')
-        score_writer.write('\n')
+    with open(out_error_cases_file, 'w', encoding='utf8') as score_writer:        
+        # ===== Overall (micro) =====
+        score_writer.write('Overall\n')
+        score_writer.write(f"TP:\t{int(tp_count)}\n")
+        score_writer.write(f"FP:\t{int(fp_count)}\n")
+        score_writer.write(f"FN:\t{int(fn_count)}\n")
+        score_writer.write(f"TN:\t{int(tn_count)}\n\n")
+        
+        score_writer.write(f"Precision:\t{prec}\n")
+        score_writer.write(f"Recall:\t{reca}\n")
+        score_writer.write(f"F-score:\t{fsco}\n")
+        score_writer.write(f"Accuracy:\t{acc}\n")
+        score_writer.write(f"Micro-F1:\t{fsco}\n\n")
+        
+        # ===== Per pair-type blocks and Macro-F1 over pairs and relationships type =====
+        rel_f1s = []
+        pair_f1s = []
+        
         for rel_type in all_rel_types:
             tp = int(rel_typed_tp_count[rel_type])
             fp = int(rel_typed_fp_count[rel_type])
             fn = int(rel_typed_fn_count[rel_type])
+            
             prec = float(tp) / (float(tp) + float(fp)) if (float(tp) + float(fp)) > 0 else 0.
             reca = float(tp) / (float(tp) + float(fn)) if (float(tp) + float(fn)) > 0 else 0.
             fsco = (2*prec*reca) / (prec + reca) if (prec + reca) > 0 else 0.
+            rel_f1s.append(fsco)
+            
+            # Header with the pair type label, then counts and metrics with blank lines like your example
             score_writer.write(rel_type)
-            score_writer.write('\t' + str(tp + fn))
-            score_writer.write('\t' + str(tp))
-            score_writer.write('\t' + str(fp))
-            score_writer.write('\t' + str(fn))
-            score_writer.write('\t' + str(prec))
-            score_writer.write('\t' + str(reca))
-            score_writer.write('\t' + str(fsco) + '\n')
-        score_writer.write('\n')
+            score_writer.write("\n")
+            score_writer.write(f"TP:\t{tp}\n")
+            score_writer.write(f"FP:\t{fp}\n")
+            score_writer.write(f"FN:\t{fn}\n\n")
+            
+            score_writer.write(f"Precision:\t{prec}\n")
+            score_writer.write(f"Recall:\t{reca}\n")
+            score_writer.write(f"F-score:\t{fsco}\n\n")
+            
+        macro_f1 = (sum(rel_f1s) / len(rel_f1s)) if len(rel_f1s) > 0 else 0.
+        score_writer.write(f"\nMacro-F1 (over relationships):\t{macro_f1}\n\n\n")
+        
         for pair_types in all_pair_types:
             tp = int(typed_tp_count[pair_types])
             fp = int(typed_fp_count[pair_types])
             fn = int(typed_fn_count[pair_types])
+            
             prec = float(tp) / (float(tp) + float(fp)) if (float(tp) + float(fp)) > 0 else 0.
             reca = float(tp) / (float(tp) + float(fn)) if (float(tp) + float(fn)) > 0 else 0.
             fsco = (2*prec*reca) / (prec + reca) if (prec + reca) > 0 else 0.
-            score_writer.write(pair_types[0] + '|' + pair_types[1])
-            score_writer.write('\t' + str(tp + fn))
-            score_writer.write('\t' + str(tp))
-            score_writer.write('\t' + str(fp))
-            score_writer.write('\t' + str(fn))
-            score_writer.write('\t' + str(prec))
-            score_writer.write('\t' + str(reca))
-            score_writer.write('\t' + str(fsco) + '\n')
-        score_writer.write('\n')
+            pair_f1s.append(fsco)
+            
+            # Header with the pair type label, then counts and metrics with blank lines like your example
+            score_writer.write(f"{pair_types[0]}|{pair_types[1]}\n")
+            score_writer.write(f"TP:\t{tp}\n")
+            score_writer.write(f"FP:\t{fp}\n")
+            score_writer.write(f"FN:\t{fn}\n\n")
+            
+            score_writer.write(f"Precision:\t{prec}\n")
+            score_writer.write(f"Recall:\t{reca}\n")
+            score_writer.write(f"F-score:\t{fsco}\n\n")
+    
+        macro_f1 = (sum(pair_f1s) / len(pair_f1s)) if len(pair_f1s) > 0 else 0.
+        score_writer.write(f"\nMacro-F1 (over pairs):\t{macro_f1}\n\n\n")
+        
         for output in outputs:
             score_writer.write(output + '\n')
             
@@ -1023,10 +1053,12 @@ def run_simple_tsv_eval(
     tp = 0.
     fp = 0.
     fn = 0.
+    tn = 0.  # NEW
     
     tp_by_pair_dict = defaultdict(int)
     fp_by_pair_dict = defaultdict(int)
     fn_by_pair_dict = defaultdict(int)
+    tn_by_pair_dict = defaultdict(int)  # NEW
     all_pairs = set()
     
     for _pred, _gold, index, id1, id2, _src_type, _tgt_type in zip(pred_class, test_labels, index_list, id1_list, id2_list, src_list, tgt_list):
@@ -1046,10 +1078,15 @@ def run_simple_tsv_eval(
             _gold = 'Association'
         
         if pred_label == _gold:
-            if not pred_label.startswith('None'):
+            if pred_label.startswith('None'):
+                tn += 1
+                tn_by_pair_dict[pair] += 1
+                outputs.append('TN\t' + sindex + '\t' + str(id1) + '\t' + str(id2) + '\t' + pred_label)
+            else:
                 tp += 1
                 tp_by_pair_dict[pair] += 1
                 outputs.append('TP\t' + sindex + '\t' + str(id1) + '\t' + str(id2) + '\t' + pred_label)
+            
         else:
             if not pred_label.startswith('None'):
                 if not _gold.startswith('None'):
@@ -1078,27 +1115,51 @@ def run_simple_tsv_eval(
         prec = tp / (tp+fp) if (tp+fp) > 0 else 0.
         recall = tp/ (tp+fn) if (tp+fn) > 0 else 0.
         f = (2*prec*recall) / (prec+recall) if (prec+recall) > 0 else 0.
+        acc = (tp + tn) / (tp+fp+tn+fn) if (tp+fp+tn+fn) > 0 else 0.0      # NEW
+        # Micro-F1 over all pairs is the same as overall F1 from global TP/FP/FN
+        micro_f1 = f  # NEW
+        
         writer.write("TP: \t" + str(int(tp)) + '\n')
         writer.write("FP: \t" + str(int(fp)) + '\n')
-        writer.write("FN: \t" + str(int(fn)) + '\n\n')
+        writer.write("FN: \t" + str(int(fn)) + '\n')
+        writer.write("TN: \t" + str(int(tn)) + '\n\n')                         # NEW
+
         writer.write("Precision: \t" + str(prec) + '\n')
         writer.write("Recall: \t" + str(recall) + '\n')
-        writer.write("F-score: \t" + str(f) + '\n\n')
+        writer.write("F-score: \t" + str(f) + '\n')
+        writer.write("Accuracy: \t"  + str(acc) + '\n')                        # NEW
+        writer.write("Micro-F1: \t"  + str(micro_f1) + '\n\n')                 # NEW
         
+        # ---- per-pair block + macro-F1 computation ----
+        pair_fs = []  # NEW: collect per-pair F1 scores for macro
         for pair in all_pairs:
             _tp = tp_by_pair_dict[pair]
             _fp = fp_by_pair_dict[pair]
             _fn = fn_by_pair_dict[pair]
+            _tn = tn_by_pair_dict[pair]
+            
             prec = _tp / (_tp+_fp) if (_tp+_fp) > 0 else 0.
             recall = _tp/ (_tp+_fn) if (_tp+_fn) > 0 else 0.
             f = (2*prec*recall) / (prec+recall) if (prec+recall) > 0 else 0.
+            acc = (_tp + _tn) / (_tp+_fp+_tn+_fn) if (_tp+_fp+_tn+_fn) > 0 else 0.0      # NEW
+            
+            # Only include pairs that actually had any support in macro-F1
+            if (_tp + _fp + _fn) > 0:
+                pair_fs.append(f)                                             # NEW
+            
             writer.write(str(pair) + '\n')
             writer.write("TP: \t" + str(int(_tp)) + '\n')
             writer.write("FP: \t" + str(int(_fp)) + '\n')
-            writer.write("FN: \t" + str(int(_fn)) + '\n\n')
+            writer.write("FN: \t" + str(int(_fn)) + '\n')
+            writer.write("TN: \t" + str(int(_tn)) + '\n\n')
+            
             writer.write("Precision: \t" + str(prec) + '\n')
             writer.write("Recall: \t" + str(recall) + '\n')
-            writer.write("F-score: \t" + str(f) + '\n\n')
+            writer.write("F-score: \t" + str(f) + '\n')
+            writer.write("Accuracy: \t"  + str(acc) + '\n\n')                        # NEW
+        
+        macro_f1 = (sum(pair_fs) / len(pair_fs)) if len(pair_fs) > 0 else 0.0   # NEW
+        writer.write("\nMacro-F1 (over pairs): \t" + str(macro_f1) + '\n\n\n')        # NEW
         
         for output in outputs:
             writer.write(output + '\n')
@@ -1121,14 +1182,16 @@ def run_tsv_eval(
                               out_pubtator_pred_file = out_pred_pubtator_file,
                               labels                 = labels)
     
-    eval(in_gold_pubtator_file, 
+    eval(in_pred_tsv_file,
+         in_gold_pubtator_file, 
          out_pred_pubtator_file, 
          out_result_file,
          to_binary = False,
          re_id_spliter_str = re_id_spliter_str,
          only_five_ne_pairs = only_five_ne_pairs)
     
-    eval(in_gold_pubtator_file, 
+    eval(in_pred_tsv_file,
+         in_gold_pubtator_file, 
          out_pred_pubtator_file, 
          out_bin_result_file,
          to_binary = True,
