@@ -12,3 +12,5 @@ dstc7.egg-info/*
 *.ipynb
 \.spyproject/
 microsoft/*
+biorex_model/*
+datasets/*
