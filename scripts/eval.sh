@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#PBS -N biorex_pred_unified_ppi
+#PBS -N biorex_eval_pharmgkb
 #PBS -l walltime=10:00:00
 #PBS -l mem=16gb
 #PBS -l ncpus=1
@@ -48,27 +48,8 @@ which python
 python -c "import tensorflow as tf, transformers as tr; print('TF', tf.__version__, 'TR', tr.__version__)"
 
 # I/O (unchanged except for a NEW mkdir -p to ensure output dirs exist)
-in_pubtator_file="datasets/Unified_PPI/Unified_PPI_dataset.PubTator"
-out_tsv_file="datasets/Unified_PPI/processed/test_for_Unified_PPI.tsv"
-out_pubtator_file="predict.pubtator"
-pre_train_model="microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract"
-
-# ENSURE DIRECTORY EXISTS
-mkdir -p datasets/Unified_PPI/processed/
-
-echo '==============================================='
-echo 'Converting the dataset into BioREx input format'
-echo '==============================================='
-python src/dataset_format_converter/convert_pubtator_2_tsv.py \
-  --exp_option biored_pred \
-  --in_pubtator_file "${in_pubtator_file}" \
-  --out_tsv_file "${out_tsv_file}"
-
-# ADD A CHECK: Stop here if the file wasn't created
-if [ ! -s "${out_tsv_file}" ]; then
-  echo "ERROR: ${out_tsv_file} was not created or is empty!"
-  exit 1
-fi
+in_tsv_file="datasets/pharmgkb/processed/test_for_biorex.tsv"
+pre_train_model="biorex_model"
 
 # Respect a GPU index passed as arg (defaults to GPU 0)
 GPU_INDEX="${1:-0}"
@@ -82,7 +63,7 @@ echo 'Generating RE predictions'
 echo '========================='
 python src/run_ncbi_rel_exp.py \
   --task_name "biorex" \
-  --test_file "${out_tsv_file}" \
+  --test_file "${in_tsv_file}" \
   --use_balanced_neg false \
   --to_add_tag_as_special_token true \
   --model_name_or_path "${pre_train_model}" \
@@ -108,14 +89,12 @@ else
   exit 2
 fi
 
-echo '==========================================='
-echo 'Convert predictions back to PubTator format'
-echo '==========================================='
-python src/utils/run_pubtator_eval.py --exp_option 'to_pubtator' \
-  --in_test_pubtator_file "${in_pubtator_file}" \
-  --in_test_tsv_file "${out_tsv_file}" \
+echo '======================================='
+echo 'Calculate Binary Dataset Eval Score'
+echo '======================================='
+python src/utils/run_pubtator_eval.py --exp_option 'simple_tsv_eval' \
+  --in_gold_tsv_file "${in_tsv_file}" \
   --in_pred_tsv_file "out_biorex_results.tsv" \
-  --out_pred_pubtator_file "${out_pubtator_file}"
-
+  --out_bin_result_file "pharmgkb_eval_binary_results.txt"
+  
 echo 'Done.'
-
