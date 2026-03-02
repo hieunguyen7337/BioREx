@@ -1,0 +1,43 @@
+TP: 	17
+FP: 	0
+FN: 	0
+TN: 	0
+
+Precision: 	1.0
+Recall: 	1.0
+F-score: 	1.0
+Accuracy: 	1.0
+Micro-F1: 	1.0
+
+('Disease', 'Gene')
+TP: 	17
+FP: 	0
+FN: 	0
+TN: 	0
+
+Precision: 	1.0
+Recall: 	1.0
+F-score: 	1.0
+Accuracy: 	1.0
+
+
+Macro-F1 (over pairs): 	1.0
+
+
+TP	12917204	D001943	472	Association
+TP	12872252	D010051	59348	Association
+TP	12872252	D001943	59348	Association
+TP	12872252	D001943	83990	Association
+TP	12872252	D010051	83990	Association
+TP	12628588	D001943	1052	Association
+TP	12702523	D001943	7157	Association
+TP	11212236	D001943	7048	Association
+TP	15170666	D001943	5892	Association
+TP	17550384	D001943	8678	Association
+TP	17550384	D002289	8678	Association
+TP	17550384	D013274	8678	Association
+TP	17550384	D015179	8678	Association
+TP	17889706	D001943	8994	Association
+TP	16123141	D001943	26994	Association
+TP	17531442	D001943	672	Association
+TP	12645254	D001943	672	Association

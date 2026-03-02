@@ -1,0 +1,59 @@
+================================================
+CWD = /mnt/hpccs01/home/n12194778/BioREx
+================================================
+==========
+Load CUDA & cuDNN modules (needed for libdevice)
+==========
+CUDA_HOME=/mnt/weka/pkg/rhel94/AuthenticAMD-25/software/CUDA/12.6.0
+Found libdevice directory:
+libdevice.10.bc
+==========
+Activate conda env
+==========
+Thu Feb 26 15:26:27 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-SXM4-40GB          On  |   00000000:88:00.0 Off |                    0 |
+| N/A   32C    P0             56W /  400W |       0MiB /  40960MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+/home/n12194778/miniconda3/envs/hieu_env_biorex/bin/python
+2026-02-26 15:26:28.357941: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1772083588.375158 3643731 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1772083588.380852 3643731 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2026-02-26 15:26:28.404183: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+TF 2.18.0 TR 4.47.1
+===============================================
+Converting the dataset into BioREx input format
+===============================================
+Utp18
+682
+5
+<annotation.AnnotationInfo object at 0x15089b2084d0> cannot be mapped to original text
+Traceback (most recent call last):
+  File "/mnt/hpccs01/home/n12194778/BioREx/src/dataset_format_converter/convert_pubtator_2_tsv.py", line 1392, in <module>
+    convert_pubtator_to_tsv_file(
+  File "/mnt/hpccs01/home/n12194778/BioREx/src/dataset_format_converter/convert_pubtator_2_tsv.py", line 285, in convert_pubtator_to_tsv_file
+    all_documents = load_pubtator_into_documents(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/hpccs01/home/n12194778/BioREx/src/dataset_format_converter/convert_pubtator_2_tsv.py", line 151, in load_pubtator_into_documents
+    add_annotations_2_text_instances(text_instances, annotations)
+  File "/mnt/hpccs01/home/n12194778/BioREx/src/dataset_format_converter/convert_pubtator_2_tsv.py", line 123, in add_annotations_2_text_instances
+    raise
+RuntimeError: No active exception to reraise
+ERROR: datasets/Unified_PPI/processed/test_for_Unified_PPI.tsv was not created or is empty!
