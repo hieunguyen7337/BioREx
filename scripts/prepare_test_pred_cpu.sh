@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # I/O
-in_pubtator_file="datasets/Unified_PPI/Unified_PPI_dataset.PubTator"
-out_tsv_file="datasets/Unified_PPI/processed/test_for_Unified_PPI.tsv"
+in_pubtator_file="datasets/aimed/aimed_bioc.Sen.PubTator"
+out_tsv_file="datasets/aimed/processed/test_for_biorex.tsv"
 
 # ENSURE DIRECTORY EXISTS
-mkdir -p datasets/Unified_PPI/processed/
+mkdir -p datasets/aimed/processed/
 
 echo '==============================================='
 echo 'Converting the dataset into BioREx input format'

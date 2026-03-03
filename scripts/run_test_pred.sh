@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#PBS -N biorex_pred_unified_ppi
+#PBS -N biorex_pred_aimed
 #PBS -l walltime=10:00:00
 #PBS -l mem=16gb
 #PBS -l ncpus=1
@@ -48,13 +48,13 @@ which python
 python -c "import tensorflow as tf, transformers as tr; print('TF', tf.__version__, 'TR', tr.__version__)"
 
 # I/O (unchanged except for a NEW mkdir -p to ensure output dirs exist)
-in_pubtator_file="datasets/Unified_PPI/Unified_PPI_dataset.PubTator"
-out_tsv_file="datasets/Unified_PPI/processed/test_for_Unified_PPI.tsv"
+in_pubtator_file="datasets/aimed/aimed_bioc.Sen.PubTator"
+out_tsv_file="datasets/aimed/processed/test_for_biorex.tsv"
 out_pubtator_file="predict.pubtator"
 pre_train_model="microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract"
 
 # ENSURE DIRECTORY EXISTS
-mkdir -p datasets/Unified_PPI/processed/
+mkdir -p datasets/aimed/processed/
 
 # Note: The TSV conversion step is now handled by scripts/prepare_test_pred_cpu.sh.
 # Make sure to run that script before running this one.
