@@ -56,17 +56,12 @@ pre_train_model="microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract"
 # ENSURE DIRECTORY EXISTS
 mkdir -p datasets/Unified_PPI/processed/
 
-echo '==============================================='
-echo 'Converting the dataset into BioREx input format'
-echo '==============================================='
-python src/dataset_format_converter/convert_pubtator_2_tsv.py \
-  --exp_option biored_pred \
-  --in_pubtator_file "${in_pubtator_file}" \
-  --out_tsv_file "${out_tsv_file}"
+# Note: The TSV conversion step is now handled by scripts/prepare_test_pred_cpu.sh.
+# Make sure to run that script before running this one.
 
-# ADD A CHECK: Stop here if the file wasn't created
+# ADD A CHECK: Stop here if the necessary input file wasn't created by the CPU job
 if [ ! -s "${out_tsv_file}" ]; then
-  echo "ERROR: ${out_tsv_file} was not created or is empty!"
+  echo "ERROR: ${out_tsv_file} was not found! Please run the preparation script first."
   exit 1
 fi
 
