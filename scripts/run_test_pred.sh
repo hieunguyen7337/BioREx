@@ -51,7 +51,7 @@ python -c "import tensorflow as tf, transformers as tr; print('TF', tf.__version
 in_pubtator_file="datasets/aimed/aimed_bioc.Sen.PubTator"
 out_tsv_file="datasets/aimed/processed/test_for_biorex.tsv"
 out_pubtator_file="predict.pubtator"
-pre_train_model="microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract"
+pre_train_model="biorex_model"
 
 # ENSURE DIRECTORY EXISTS
 mkdir -p datasets/aimed/processed/
