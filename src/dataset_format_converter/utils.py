@@ -5,8 +5,8 @@ Created on Thu Jul 15 14:09:51 2021
 @author: laip2
 """
 import re
-import spacy
-import scispacy
+#import spacy
+#import scispacy
 import json
 from collections import defaultdict
 from document import PubtatorDocument, TextInstance
@@ -115,7 +115,7 @@ def tokenize_document_by_spacy(document, nlp):
 
 def tokenize_documents_by_spacy(documents, spacy_model):
     
-    nlp = spacy.load(spacy_model)
+    nlp = spacy.load('en_core_web_sm')
     
     for document in documents:
         split_sentence(document, nlp)
@@ -1225,6 +1225,7 @@ def dump_documents_2_bert_format(
     #print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
     _index = 0
     
+    bert_writer = open(out_bert_file, 'w', encoding='utf8')
     out_str = ''
     
     if is_test_set:
@@ -1232,6 +1233,7 @@ def dump_documents_2_bert_format(
             out_str += 'pmid\tid1\tid2\tis_in_same_sent\tmin_sents_window\tsentence\tin_neighbors\tlabel\n'
         else:
             out_str += 'pmid\tid1\tid2\tis_in_same_sent\tmin_sents_window\tsentence\tin_neighbors\tlabel\tnovelty\n'
+    bert_writer.write(out_str)
     
     number_unique_YES_instances = 0
     
@@ -1829,7 +1831,7 @@ def dump_documents_2_bert_gt_format_by_sent_level(
             
         print('number_unique_YES_instances', number_unique_YES_instances)
     #raise('GG')
-    #debug_writer.close()
+    bert_writer.close()
     return 0
 
 def dump_documents_2_bert_format_by_sent_level(
