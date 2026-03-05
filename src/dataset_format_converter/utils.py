@@ -5,8 +5,11 @@ Created on Thu Jul 15 14:09:51 2021
 @author: laip2
 """
 import re
-#import spacy
-#import scispacy
+try:
+    import spacy
+except ImportError:
+    spacy = None
+nlp = None
 import json
 from collections import defaultdict
 from document import PubtatorDocument, TextInstance
