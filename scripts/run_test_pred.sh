@@ -48,6 +48,7 @@ which python
 python -c "import tensorflow as tf, transformers as tr; print('TF', tf.__version__, 'TR', tr.__version__)"
 
 # I/O 
+in_pubtator_file="datasets/Phos_dataset/phosphorylation_corpus.PubTator"
 out_tsv_file="datasets/Phos_dataset/processed/test_for_Phos.tsv"
 out_pubtator_file="predict.pubtator"
 pre_train_model="biorex_model"
