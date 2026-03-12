@@ -1,0 +1,39 @@
+Full 5064 pairs within the whole aimed instead of just those in test_for_biorex.tsv
+
+Total pairs (N): 5064
+TP (Positive pairs): 160
+FP (Predicted positive but negative): 36
+FN (Predicted negative but positive): 783
+TN (Negative pairs): 4085
+
+Precision (Positive): 0.8163
+Recall (Positive):    0.1697
+F1 (Positive):        0.2809
+
+Precision (Negative): 0.8392
+Recall (Negative):    0.9913
+F1 (Negative):        0.9089
+
+Accuracy: 0.8383
+Micro F1: 0.7920
+Macro F1: 0.5949
+
+1028 pairs with in test_for_biorex.tsv
+
+Total pairs (N): 1028
+TP (Positive pairs): 160
+FP (Predicted positive but negative): 36
+FN (Predicted negative but positive): 35
+TN (Negative pairs): 797
+
+Precision (Positive): 0.8163
+Recall (Positive):    0.8205
+F1 (Positive):        0.8184
+
+Precision (Negative): 0.9579
+Recall (Negative):    0.9568
+F1 (Negative):        0.9574
+
+Accuracy: 0.9309
+Micro F1: 0.9310
+Macro F1: 0.8879
