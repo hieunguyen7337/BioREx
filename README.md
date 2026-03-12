@@ -1,3 +1,5 @@
+# BioREx
+
 ## Updates:
 Updated BioREx to the Python 3.12 version
 
@@ -17,72 +19,117 @@ pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https
 pip install -r requirements.txt
 ```
 
-## Train and evaluate BioREx
-
-### Step 1: Download the datasets for BioREx
-
-You can download [our converted datasets](https://ftp.ncbi.nlm.nih.gov/pub/lu/BioREx/datasets.zip), and unzip it to 
-
-```
-datasets/
-```
-
-If you want to convert the datasets by yourself, you can use the below script to convert original datasets into our input format.
-```
-bash scripts/build_biorex_datasets.sh
-```
-
-### Step 2: Download the pre-trained model
-
-Please download the model [here](https://huggingface.co/microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract)
-
-Then put them into 
-
-```
-microsoft/
-```
-
-### Step 3: Train and evaluate
-
-```
-bash scripts/run_biorex_exp.sh <CUDA_VISIBLE_DEVICES>
-```
-
-Please replace the above <CUDA_VISIBLE_DEVICES> with your GPUs' IDs. Eg: '0,1' for GPU devices 0 and 1.
-For example
-
-```
-bash scripts/run_biorex_exp.sh 0,1
-```
-
-
-
-## BioREx pre-trained models
+## BioREx Pre-trained Models
 
 You can download the BioREx pre-trained models:
 
-* [BioREx BioLinkBERT model (Preferred)](https://ftp.ncbi.nlm.nih.gov/pub/lu/BioREx/pretrained_model_biolinkbert.zip) is utilized in the beta version of [PubTator3](https://www.ncbi.nlm.nih.gov/research/pubtator3/).
+* [BioREx BioLinkBERT model (Preferred)](https://ftp.ncbi.nlm.nih.gov/pub/lu/BioREx/pretrained_model_biolinkbert.zip)
 * [BioREx PubMedBERT model (Original)](https://ftp.ncbi.nlm.nih.gov/pub/lu/BioREx/pretrained_model.zip) 
 
-## Predicting New Data:
+Download the model and extract it into the `biorex_model/` directory in the root of the project.
 
-If you only wish to use our tool for predicting new data without the need for training, please follow the steps outlined below:
+## Prediction Pipeline
 
-Download the BioREx pre-trained model [BioREx model](https://ftp.ncbi.nlm.nih.gov/pub/lu/BioREx/pretrained_model.zip) file and place it in the "BioREx/" directory.
+To predict relations on new data, the data needs to follow the json -> pubtator -> tsv pipeline. Follow the steps below:
 
-Open the "scripts/run_test_pred.sh" file and modify the values of the variables "in_pubtator_file" and "out_pubtator_file" to match your input PubTator file (with annotations) and the desired output PubTator file (where predicted relations will be stored).
+### Step 1: Data Preparation (JSON -> PubTator -> TSV)
 
-Execute the following script to initiate the prediction process:
+Since the `datasets/` folder is not included in the repository, you will first need to create the directory structure and place your JSON files there.
 
+```bash
+mkdir -p datasets/Phos_dataset/
+mkdir -p datasets/Unified_PPI/
 ```
-bash scripts/run_test_pred.sh <CUDA_VISIBLE_DEVICES>
+Place `cleaned_phosphorylation_corpus.json` into `datasets/Phos_dataset/`.
+Place `Unified_PPI_dataset_clean.json` into `datasets/Unified_PPI/`.
+
+Next, convert your JSON/JSONL format to PubTator format using our custom dataset format converters located in `src/dataset_format_converter/custom_converters/`.
+
+For the Phos dataset:
+```bash
+python src/dataset_format_converter/custom_converters/convert_phos_to_pubtator.py \
+  --input_file "datasets/Phos_dataset/cleaned_phosphorylation_corpus.json" \
+  --output_file "datasets/Phos_dataset/phosphorylation_corpus.PubTator"
 ```
 
-Please replace the above <CUDA_VISIBLE_DEVICES> with your GPUs' IDs. Eg: '0,1' for GPU devices 0 and 1.
-For example
-
+For the Unified_PPI dataset:
+```bash
+python src/dataset_format_converter/custom_converters/convert_unified_to_pubtator.py \
+  --input_file "datasets/Unified_PPI/Unified_PPI_dataset_clean.json" \
+  --output_file "datasets/Unified_PPI/Unified_PPI_dataset.PubTator"
 ```
-bash scripts/run_test_pred.sh 0,1
+This will generate the required `.PubTator` files.
+
+Next, convert the PubTator file into TSV format containing the extracted relations and candidates. 
+
+For the Phos dataset:
+```bash
+# Ensure the model input directory exists
+mkdir -p datasets/Phos_dataset/processed/
+
+python src/dataset_format_converter/convert_pubtator_2_tsv.py \
+  --exp_option biored_pred \
+  --in_pubtator_file "datasets/Phos_dataset/phosphorylation_corpus.PubTator" \
+  --out_tsv_file "datasets/Phos_dataset/processed/test_for_Phos.tsv"
+```
+
+For the Unified_PPI dataset:
+```bash
+# Ensure the model input directory exists
+mkdir -p datasets/Unified_PPI/processed/
+
+python src/dataset_format_converter/convert_pubtator_2_tsv.py \
+  --exp_option biored_pred \
+  --in_pubtator_file "datasets/Unified_PPI/Unified_PPI_dataset.PubTator" \
+  --out_tsv_file "datasets/Unified_PPI/processed/test_for_Unified_PPI.tsv"
+```
+
+### Step 2: Run Predictions
+
+To initiate the prediction process over the generated TSV files using the BioREx pre-trained model on GPU 0:
+
+For the Phos dataset, edit scripts\run_test_pred.sh and replace the following lines with the value below:
+```python
+in_pubtator_file="datasets/Phos_dataset/phosphorylation_corpus.PubTator"
+out_tsv_file="datasets/Phos_dataset/processed/test_for_Phos.tsv"
+out_pubtator_file="predict.pubtator"
+```
+then run the following command:
+```bash
+bash scripts/run_test_pred.sh
+```
+*(If on HPC, use `qsub scripts/run_test_pred.sh` instead of `bash`)*
+
+For the Unified_PPI dataset, edit scripts\run_test_pred.sh and replace the following lines with the value below:
+```python
+in_pubtator_file="datasets/Unified_PPI/Unified_PPI_dataset.PubTator"
+out_tsv_file="datasets/Unified_PPI/processed/test_for_Unified_PPI.tsv"
+out_pubtator_file="predict.pubtator"
+```
+then run the following command:
+```bash
+bash scripts/run_test_pred.sh
+```
+*(If on HPC, use `qsub scripts/run_test_pred.sh` instead of `bash`)*
+
+### Step 3: Evaluation
+
+A standalone metric evaluation script, `evaluate_metrics.py`, is available in the root directory. It automatically computes accurate binary or multi-class classification scores (Accuracy, Precision, Recall, Micro F1, Macro F1).
+
+To evaluate your predictions against the gold-standard PubTator files:
+
+For the Phos dataset:
+```bash
+python evaluate_metrics.py \
+  --pred_file "datasets/Phos_dataset/predict.pubtator" \
+  --gold_file "datasets/Phos_dataset/phosphorylation_corpus.PubTator"
+```
+
+For the Unified_PPI dataset:
+```bash
+python evaluate_metrics.py \
+  --pred_file "datasets/Unified_PPI/predict.pubtator" \
+  --gold_file "datasets/Unified_PPI/Unified_PPI_dataset.PubTator"
 ```
 
 ## Citing BioREx
